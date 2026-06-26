@@ -29,6 +29,9 @@ class CSVPositionLoader(PositionLoader):
                     symbol=row["symbol"],
                     product_type=row.get("product_type", "equity"),
                     multiplier=row.get("multiplier"),
+                    strike=row.get("strike"),
+                    expiry=row.get("expiry"),
+                    option_type=row.get("option_type"),
                 )
 
                 portfolios[pm].add_position(
