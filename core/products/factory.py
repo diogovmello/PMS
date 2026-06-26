@@ -4,7 +4,7 @@ from core.products.option import Option
 
 
 def build_instrument(symbol, product_type="equity", multiplier=None,
-                      strike=None, expiry=None, option_type=None):
+                      strike=None, expiry=None, option_type=None, underlying=None):
     product_type = (product_type or "equity").lower()
 
     if product_type == "equity":
@@ -17,6 +17,7 @@ def build_instrument(symbol, product_type="equity", multiplier=None,
             strike=float(strike),
             expiry=expiry,
             option_type=option_type,
+            underlying=underlying,
             multiplier=float(multiplier or 100),
         )
     else:

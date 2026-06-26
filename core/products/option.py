@@ -4,19 +4,19 @@ from core.products.base import Instrument
 class Option(Instrument):
     """
     Vanilla option contract (call or put). PnL uses the live quoted
-    option price, scaled by a multiplier (100 shares per contract,
-    the US equity-options standard).
+    option price, scaled by a multiplier (100 shares per contract).
 
-    strike, expiry, and option_type aren't used in the PnL math yet -
-    they identify the contract, and will feed Black-Scholes/Greeks
-    later in the risk metrics phase.
+    `underlying` is the stock ticker the option is written on (e.g. AAPL),
+    used by the Greeks calculation - separate from `symbol`, which is the
+    option's own OCC contract code.
     """
 
-    def __init__(self, symbol, strike, expiry, option_type, multiplier=100):
+    def __init__(self, symbol, strike, expiry, option_type, underlying, multiplier=100):
         super().__init__(symbol)
         self.strike = strike
         self.expiry = expiry
-        self.option_type = option_type.lower()  # 'call' or 'put'
+        self.option_type = option_type.lower()
+        self.underlying = underlying
         self.multiplier = multiplier
 
     def market_value(self, quantity, current_price):
