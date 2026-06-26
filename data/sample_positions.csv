@@ -1,5 +1,6 @@
-﻿pm,symbol,quantity,entry_price
-smith,AAPL,100,150
-smith,MSFT,50,300
-jones,TSLA,20,700
-jones,AAPL,30,145
+﻿pm,symbol,quantity,entry_price,product_type,multiplier
+smith,AAPL,100,150,equity,
+smith,MSFT,50,300,equity,
+smith,ES=F,2,5000,future,50
+jones,TSLA,20,700,equity,
+jones,AAPL,30,145,equity,

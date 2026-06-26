@@ -1,12 +1,14 @@
 import csv
 from core.loaders.base import PositionLoader
 from core.position import Portfolio
+from core.products.factory import build_instrument
 
 
 class CSVPositionLoader(PositionLoader):
     """
     Loads positions from an EOD CSV file.
-    Expected columns: pm, symbol, quantity, entry_price
+    Required columns: pm, symbol, quantity, entry_price
+    Optional columns: product_type (default 'equity'), multiplier (default 1)
 
     Positions are grouped by PM - each PM gets their own Portfolio.
     """
@@ -22,9 +24,17 @@ class CSVPositionLoader(PositionLoader):
                 pm = row["pm"]
                 if pm not in portfolios:
                     portfolios[pm] = Portfolio()
+
+                instrument = build_instrument(
+                    symbol=row["symbol"],
+                    product_type=row.get("product_type", "equity"),
+                    multiplier=row.get("multiplier"),
+                )
+
                 portfolios[pm].add_position(
                     symbol=row["symbol"],
                     quantity=float(row["quantity"]),
                     entry_price=float(row["entry_price"]),
+                    instrument=instrument,
                 )
         return portfolios
