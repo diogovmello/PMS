@@ -1,7 +1,7 @@
-﻿pm,symbol,quantity,entry_price,product_type,multiplier,strike,expiry,option_type
-smith,AAPL,100,150,equity,,,,
-smith,MSFT,50,300,equity,,,,
-smith,ES=F,2,5000,future,50,,,
-smith,AAPL260717C00300000,5,8.5,option,100,300,7/17/2026,call
-jones,TSLA,20,700,equity,,,,
-jones,AAPL,30,145,equity,,,,
+﻿pm,symbol,quantity,entry_price,product_type,multiplier,strike,expiry,option_type,underlying
+smith,AAPL,100,150,equity,,,,,
+smith,MSFT,50,300,equity,,,,,
+smith,ES=F,2,5000,future,50,,,,
+smith,AAPL260717C00300000,5,8.5,option,100,300,2026-07-17,call,AAPL
+jones,TSLA,20,700,equity,,,,,
+jones,AAPL,30,145,equity,,,,,

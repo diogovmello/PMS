@@ -11,10 +11,10 @@ class YFinancePriceProvider(PriceProvider):
 
         prices = {}
         for symbol in symbols:
-            # yf.download shapes the result differently for one symbol
-            # (a Series) vs multiple symbols (a DataFrame with one column each).
-            if len(symbols) == 1:
-                prices[symbol] = closes.iloc[-1]
-            else:
+            if hasattr(closes, "columns"):
+                # DataFrame - one column per symbol, regardless of how many symbols
                 prices[symbol] = closes[symbol].iloc[-1]
+            else:
+                # Bare Series - only happens in some yfinance versions/edge cases
+                prices[symbol] = closes.iloc[-1]
         return prices
