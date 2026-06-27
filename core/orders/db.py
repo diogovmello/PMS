@@ -5,7 +5,7 @@ DB_PATH = "data/orders.db"
 
 def get_connection():
     conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row  # lets us access columns by name
+    conn.row_factory = sqlite3.Row
     return conn
 
 
@@ -21,6 +21,12 @@ def init_db():
             price REAL NOT NULL,
             timestamp TEXT NOT NULL,
             status TEXT NOT NULL DEFAULT 'FILLED'
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS processed_files (
+            filename TEXT PRIMARY KEY,
+            processed_at TEXT NOT NULL
         )
     """)
     conn.commit()
