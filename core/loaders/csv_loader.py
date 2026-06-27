@@ -32,6 +32,7 @@ class CSVPositionLoader(PositionLoader):
                     strike=row.get("strike"),
                     expiry=row.get("expiry"),
                     option_type=row.get("option_type"),
+                    underlying=row.get("underlying"),
                 )
 
                 portfolios[pm].add_position(
