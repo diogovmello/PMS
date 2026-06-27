@@ -20,7 +20,13 @@ def init_db():
             quantity REAL NOT NULL,
             price REAL NOT NULL,
             timestamp TEXT NOT NULL,
-            status TEXT NOT NULL DEFAULT 'FILLED'
+            status TEXT NOT NULL DEFAULT 'FILLED',
+            product_type TEXT NOT NULL DEFAULT 'equity',
+            multiplier REAL,
+            strike REAL,
+            expiry TEXT,
+            option_type TEXT,
+            underlying TEXT
         )
     """)
     conn.execute("""
