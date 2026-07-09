@@ -2,8 +2,17 @@ from core.orders.db import get_connection
 from core.orders.order import Order
 
 
-def insert_order(order):
-    conn = get_connection()
+def insert_order(order, conn=None):
+    """
+    Insert `order`. If `conn` is provided, the insert is left uncommitted
+    on that connection so the caller can batch it into a larger transaction
+    (see `core.orders.ingestion`); otherwise it's committed immediately on
+    a connection of its own.
+    """
+    owns_conn = conn is None
+    if owns_conn:
+        conn = get_connection()
+
     cursor = conn.execute(
         """
         INSERT INTO orders (pm, symbol, side, quantity, price, timestamp, status,
@@ -14,9 +23,11 @@ def insert_order(order):
          order.timestamp, order.status, order.product_type, order.multiplier,
          order.strike, order.expiry, order.option_type, order.underlying),
     )
-    conn.commit()
     order.order_id = cursor.lastrowid
-    conn.close()
+
+    if owns_conn:
+        conn.commit()
+        conn.close()
     return order
 
 

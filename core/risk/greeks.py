@@ -26,6 +26,11 @@ def black_scholes_delta(underlying_price, strike, time_to_expiry, volatility,
     Black-Scholes delta: sensitivity of the option's price to a $1 move
     in the underlying. Calls: between 0 and 1. Puts: between -1 and 0.
     """
+    if time_to_expiry <= 0:
+        raise ValueError(
+            f"time_to_expiry must be positive, got {time_to_expiry} - option has already expired"
+        )
+
     d1 = (
         math.log(underlying_price / strike)
         + (risk_free_rate + 0.5 * volatility ** 2) * time_to_expiry

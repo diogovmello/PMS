@@ -13,18 +13,25 @@ PMS/
 │   │   ├── base.py          # Abstract Instrument (market_value, unrealized_pnl)
 │   │   ├── equity.py        # Vanilla equities/ETFs
 │   │   ├── future.py        # Futures - PnL scaled by contract multiplier
-│   │   ├── option.py        # Options - live-priced; Greeks planned (see Roadmap)
+│   │   ├── option.py        # Options - live-priced, OCC contract symbols
 │   │   └── factory.py       # Builds the right Instrument from a product_type string
-│   ├── loaders/              # Position ingestion
-│   │   ├── base.py          # Abstract PositionLoader
-│   │   └── csv_loader.py    # EOD CSV loader, splits multi-PM files by `pm` column
-│   ├── prices/               # Market data
-│   │   ├── base.py          # Abstract PriceProvider
-│   │   └── yfinance_provider.py  # Live prices via Yahoo Finance
-│   ├── risk/                 # Portfolio risk
-│   │   ├── exposure.py      # Gross / net / per-symbol dollar exposure
-│   │   └── var.py           # Parametric (variance-covariance) 1-day VaR
-│   └── position.py           # Position and Portfolio - the engine's core data model
+│   ├── loaders/               # Position ingestion
+│   │   ├── base.py           # Abstract PositionLoader
+│   │   ├── csv_loader.py     # EOD CSV loader, splits multi-PM files by `pm` column
+│   │   └── order_based_loader.py  # Replays FILLED orders into positions (average-cost accounting)
+│   ├── orders/                # Order book - the source of truth behind order_based_loader
+│   │   ├── order.py          # Order dataclass
+│   │   ├── db.py             # SQLite schema (orders, processed_files)
+│   │   ├── repository.py     # Insert/query orders
+│   │   └── ingestion.py      # Replays incoming order CSVs into the DB, once each
+│   ├── prices/                # Market data
+│   │   ├── base.py           # Abstract PriceProvider
+│   │   └── yfinance_provider.py  # Live prices via Yahoo Finance; options via the live option chain
+│   ├── risk/                  # Portfolio risk
+│   │   ├── exposure.py       # Gross / net / per-symbol dollar exposure
+│   │   ├── var.py            # Parametric (variance-covariance) 1-day VaR
+│   │   └── greeks.py         # Black-Scholes delta
+│   └── position.py            # Position and Portfolio - the engine's core data model
 ├── api/                       # Web layer (planned - see Roadmap)
 ├── data/
 │   └── sample_positions.csv  # Sample multi-PM EOD file (equity, future, option)
@@ -46,7 +53,9 @@ PMS/
 VaR = z * sqrt(wᵗ Σ w)
 ```
 
-where `w` is the vector of dollar exposures (not weights) and `Σ` is the return covariance matrix. This assumes returns are normally distributed, which is the standard simplification for a first-pass risk number — historical simulation and Monte Carlo are listed in the Roadmap as more realistic (and more expensive) alternatives. One known limitation: newly listed instruments (e.g. a specific option contract) have a shorter price history than the lookback window, which can leave gaps in the covariance matrix — `pandas.DataFrame.cov()` handles this via pairwise-NaN exclusion, but it's a real edge case in the current implementation, not a hidden one.
+where `w` is the vector of dollar exposures (not weights) and `Σ` is the return covariance matrix. This assumes returns are normally distributed, which is the standard simplification for a first-pass risk number — historical simulation and Monte Carlo are listed in the Roadmap as more realistic (and more expensive) alternatives. Known limitation: newly listed instruments (e.g. a stock that just IPO'd) have a shorter price history than the lookback window, which can leave gaps in the covariance matrix — `pandas.DataFrame.cov()` handles this via pairwise-NaN exclusion, but it's a real edge case in the current implementation, not a hidden one.
+
+**Options are priced and risked off the underlying, not the contract itself.** Yahoo Finance doesn't serve historical daily bars or `yf.download`-style quotes for an individual OCC option contract, only a live option-chain snapshot. So `YFinancePriceProvider` parses the OCC symbol (e.g. `AAPL260717C00300000`) to get the underlying/expiry/type and pulls the live quote from `Ticker(underlying).option_chain(expiry)`, while `compute_portfolio_var()` uses the underlying's historical returns as a proxy for the option's own (unavailable) return series. That proxy isn't delta-scaled, so it's a simplification, not a full options VaR model — a truer treatment would weight the underlying's return series by the position's Black-Scholes delta (see `core/risk/greeks.py`) rather than using it directly.
 
 **CSV and yfinance over live broker/vendor integration, for now.** A live IBKR feed or a paid data vendor would add authentication, async handling, and market-data-subscription complexity that has nothing to do with portfolio management logic itself. Starting with file-based ingestion and a free market data API kept the focus on the engine; the abstraction layers above mean swapping either one in later is a contained change.
 
@@ -96,13 +105,14 @@ for pm, portfolio in portfolios.items():
 ## Current features
 
 - Instrument hierarchy: equities, futures (contract multiplier), options (live-priced)
-- Multi-PM position loading from a single EOD CSV
-- Live pricing via Yahoo Finance (`yfinance`)
-- Portfolio risk: gross/net/per-symbol exposure, parametric VaR
+- Multi-PM position loading from a single EOD CSV, or replayed from a SQLite order book (average-cost accounting)
+- Live pricing via Yahoo Finance (`yfinance`), including live option-chain quotes for OCC contracts
+- Portfolio risk: gross/net/per-symbol exposure, parametric VaR, Black-Scholes delta
 
 ## Roadmap
 
-- [ ] Black-Scholes delta (then full Greeks: gamma, theta, vega) for options
+- [x] Black-Scholes delta for options
+- [ ] Full Greeks (gamma, theta, vega) for options
 - [ ] Web UI (FastAPI/Flask backend + frontend) for positions, P&L, and risk
 - [ ] Automated test suite (pytest)
 - [ ] CI via GitHub Actions

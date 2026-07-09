@@ -23,6 +23,11 @@ class Portfolio:
         self.positions = {}
 
     def add_position(self, symbol, quantity, entry_price, instrument=None):
+        if symbol in self.positions:
+            raise ValueError(
+                f"Duplicate position for symbol '{symbol}' - expected exactly one row "
+                "per symbol per PM in the source data"
+            )
         self.positions[symbol] = Position(symbol, quantity, entry_price, instrument)
 
     def get_position(self, symbol):
