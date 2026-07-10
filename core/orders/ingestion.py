@@ -2,11 +2,11 @@ import csv
 import os
 from datetime import datetime, timezone
 
-from core.orders.db import get_connection
+from core.orders.db import ROOT_DIR, get_connection
 from core.orders.order import Order
 from core.orders.repository import insert_order
 
-INCOMING_DIR = "data/incoming_orders"
+INCOMING_DIR = str(ROOT_DIR / "data" / "incoming_orders")
 
 
 def _is_processed(filename):
