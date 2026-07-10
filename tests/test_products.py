@@ -3,6 +3,7 @@ import pytest
 from core.products.equity import Equity
 from core.products.future import Future
 from core.products.option import Option
+from core.products.perpetual import Perpetual
 from core.products.factory import build_instrument
 
 
@@ -28,6 +29,20 @@ class TestFuture:
     def test_unrealized_pnl_scaled_by_multiplier(self):
         fut = Future("ES=F", multiplier=50)
         assert fut.unrealized_pnl(quantity=2, entry_price=4900, current_price=5000) == 10000
+
+
+class TestPerpetual:
+    def test_market_value_scaled_by_multiplier(self):
+        perp = Perpetual("BTCUSDT", multiplier=1)
+        assert perp.market_value(quantity=2, current_price=65000) == 130000
+
+    def test_unrealized_pnl_scaled_by_multiplier(self):
+        perp = Perpetual("BTCUSDT", multiplier=1)
+        assert perp.unrealized_pnl(quantity=2, entry_price=64000, current_price=65000) == 2000
+
+    def test_unrealized_pnl_short(self):
+        perp = Perpetual("BTCUSDT", multiplier=1)
+        assert perp.unrealized_pnl(quantity=-2, entry_price=65000, current_price=64000) == 2000
 
 
 class TestOption:
@@ -59,6 +74,15 @@ class TestBuildInstrument:
 
     def test_future_multiplier_defaults_to_one(self):
         instrument = build_instrument("ES=F", product_type="future")
+        assert instrument.multiplier == 1
+
+    def test_builds_perpetual_with_multiplier(self):
+        instrument = build_instrument("BTCUSDT", product_type="perpetual", multiplier=1)
+        assert isinstance(instrument, Perpetual)
+        assert instrument.multiplier == 1
+
+    def test_perpetual_multiplier_defaults_to_one(self):
+        instrument = build_instrument("BTCUSDT", product_type="perpetual")
         assert instrument.multiplier == 1
 
     def test_builds_option_with_fields(self):
