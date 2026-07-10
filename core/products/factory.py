@@ -1,6 +1,7 @@
 from core.products.equity import Equity
 from core.products.future import Future
 from core.products.option import Option
+from core.products.perpetual import Perpetual
 
 
 def build_instrument(symbol, product_type="equity", multiplier=None,
@@ -11,6 +12,8 @@ def build_instrument(symbol, product_type="equity", multiplier=None,
         return Equity(symbol)
     elif product_type == "future":
         return Future(symbol, multiplier=float(multiplier or 1))
+    elif product_type == "perpetual":
+        return Perpetual(symbol, multiplier=float(multiplier or 1))
     elif product_type == "option":
         return Option(
             symbol,
