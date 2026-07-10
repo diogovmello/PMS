@@ -2,3 +2,4 @@ venv/
 __pycache__/
 *.pyc
 data/orders.db
+.pytest_cache/

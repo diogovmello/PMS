@@ -35,8 +35,9 @@ PMS/
 ├── api/                       # Web layer (planned - see Roadmap)
 ├── data/
 │   └── sample_positions.csv  # Sample multi-PM EOD file (equity, future, option)
-├── tests/                     # Automated tests (planned - see Roadmap)
-└── requirements.txt
+├── tests/                     # pytest suite - no network or real DB access required
+├── requirements.txt
+└── requirements-dev.txt       # requirements.txt + pytest
 ```
 
 ## Design decisions
@@ -68,6 +69,15 @@ python -m venv venv
 source venv/Scripts/activate   # Windows (Git Bash); use venv/bin/activate on macOS/Linux
 pip install -r requirements.txt
 ```
+
+## Testing
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
+The suite (`tests/`) runs in under a couple of seconds because market-data calls (`yf.download`, `Ticker.option_chain`) and the orders SQLite DB are stubbed/pointed at a temp file per test (see `tests/conftest.py`) - no network access or `data/orders.db` writes required to run it.
 
 ## Example usage
 
@@ -112,9 +122,9 @@ for pm, portfolio in portfolios.items():
 ## Roadmap
 
 - [x] Black-Scholes delta for options
+- [x] Automated test suite (pytest)
 - [ ] Full Greeks (gamma, theta, vega) for options
 - [ ] Web UI (FastAPI/Flask backend + frontend) for positions, P&L, and risk
-- [ ] Automated test suite (pytest)
 - [ ] CI via GitHub Actions
 - [ ] Historical-simulation and/or Monte Carlo VaR as alternatives to parametric
 - [ ] Live position feed (e.g. IBKR) as a second `PositionLoader` implementation
