@@ -117,13 +117,13 @@ for pm, portfolio in portfolios.items():
 - Instrument hierarchy: equities, futures (contract multiplier), options (live-priced)
 - Multi-PM position loading from a single EOD CSV, or replayed from a SQLite order book (average-cost accounting)
 - Live pricing via Yahoo Finance (`yfinance`), including live option-chain quotes for OCC contracts
-- Portfolio risk: gross/net/per-symbol exposure, parametric VaR, Black-Scholes delta
+- Portfolio risk: gross/net/per-symbol exposure, parametric VaR, full Black-Scholes Greeks (delta, gamma, theta, vega)
 
 ## Roadmap
 
 - [x] Black-Scholes delta for options
 - [x] Automated test suite (pytest)
-- [ ] Full Greeks (gamma, theta, vega) for options
+- [x] Full Greeks (gamma, theta, vega) for options
 - [ ] Web UI (FastAPI/Flask backend + frontend) for positions, P&L, and risk
 - [ ] CI via GitHub Actions
 - [ ] Historical-simulation and/or Monte Carlo VaR as alternatives to parametric

@@ -6,8 +6,12 @@ import pytest
 from core.products.option import Option
 from core.risk.greeks import (
     black_scholes_delta,
+    black_scholes_gamma,
+    black_scholes_theta,
+    black_scholes_vega,
     time_to_expiry_years,
     compute_option_delta,
+    compute_option_greeks,
 )
 from core.risk import greeks as greeks_module
 
@@ -62,6 +66,62 @@ class TestBlackScholesDelta:
             )
 
 
+class TestBlackScholesGamma:
+    def test_positive(self):
+        gamma = black_scholes_gamma(underlying_price=100, strike=100, time_to_expiry=0.5, volatility=0.3)
+        assert gamma > 0
+
+    def test_highest_near_the_money(self):
+        atm = black_scholes_gamma(underlying_price=100, strike=100, time_to_expiry=0.5, volatility=0.3)
+        otm = black_scholes_gamma(underlying_price=100, strike=300, time_to_expiry=0.5, volatility=0.3)
+        assert atm > otm
+
+    def test_expired_option_raises(self):
+        with pytest.raises(ValueError):
+            black_scholes_gamma(underlying_price=100, strike=100, time_to_expiry=0, volatility=0.3)
+
+
+class TestBlackScholesVega:
+    def test_positive(self):
+        vega = black_scholes_vega(underlying_price=100, strike=100, time_to_expiry=0.5, volatility=0.3)
+        assert vega > 0
+
+    def test_highest_near_the_money(self):
+        atm = black_scholes_vega(underlying_price=100, strike=100, time_to_expiry=0.5, volatility=0.3)
+        otm = black_scholes_vega(underlying_price=100, strike=300, time_to_expiry=0.5, volatility=0.3)
+        assert atm > otm
+
+    def test_expired_option_raises(self):
+        with pytest.raises(ValueError):
+            black_scholes_vega(underlying_price=100, strike=100, time_to_expiry=0, volatility=0.3)
+
+
+class TestBlackScholesTheta:
+    def test_atm_call_theta_is_negative(self):
+        theta = black_scholes_theta(
+            underlying_price=100, strike=100, time_to_expiry=0.5, volatility=0.3, option_type="call",
+        )
+        assert theta < 0
+
+    def test_atm_put_theta_is_negative(self):
+        theta = black_scholes_theta(
+            underlying_price=100, strike=100, time_to_expiry=0.5, volatility=0.3, option_type="put",
+        )
+        assert theta < 0
+
+    def test_expired_option_raises(self):
+        with pytest.raises(ValueError):
+            black_scholes_theta(
+                underlying_price=100, strike=100, time_to_expiry=0, volatility=0.3, option_type="call",
+            )
+
+    def test_unknown_option_type_raises(self):
+        with pytest.raises(ValueError):
+            black_scholes_theta(
+                underlying_price=100, strike=100, time_to_expiry=0.5, volatility=0.3, option_type="straddle",
+            )
+
+
 class TestTimeToExpiryYears:
     def test_computes_fraction_of_year_remaining(self):
         t = time_to_expiry_years("2026-07-19", as_of=date(2026, 7, 9))
@@ -93,3 +153,31 @@ class TestComputeOptionDelta:
 
         delta = compute_option_delta(option, underlying_price=310)
         assert 0 <= delta <= 1
+
+
+class TestComputeOptionGreeks:
+    def test_returns_all_four_greeks(self, monkeypatch):
+        history = pd.Series([300.0, 302.0, 298.0, 305.0, 303.0, 307.0])
+
+        class _FakeDownloadResult:
+            def __init__(self, close):
+                self._close = close
+
+            def __getitem__(self, key):
+                return self._close
+
+        def _fake_download(symbol, period, progress, threads):
+            return _FakeDownloadResult(history)
+
+        monkeypatch.setattr(greeks_module.yf, "download", _fake_download)
+
+        option = Option("AAPL271231C00300000", strike=300, expiry="2027-12-31",
+                         option_type="call", underlying="AAPL")
+
+        greeks = compute_option_greeks(option, underlying_price=310)
+
+        assert set(greeks) == {"delta", "gamma", "theta", "vega"}
+        assert 0 <= greeks["delta"] <= 1
+        assert greeks["gamma"] > 0
+        assert greeks["theta"] < 0
+        assert greeks["vega"] > 0
